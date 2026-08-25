@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Line Trainer — Sonnet 18</title>
+<style>
+  :root {
+    --bg: #f6f3ec;
+    --card: #fffdf8;
+    --ink: #2c2a26;
+    --muted: #8a8377;
+    --accent: #7c5c3e;
+    --accent-ink: #fffdf8;
+    --edge: rgba(44, 42, 38, 0.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1a17;
+      --card: #262320;
+      --ink: #ece7dd;
+      --muted: #9a9186;
+      --accent: #c8a179;
+      --accent-ink: #1c1a17;
+      --edge: rgba(236, 231, 221, 0.14);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main {
+    width: 100%;
+    max-width: 620px;
+    background: var(--card);
+    border: 1px solid var(--edge);
+    border-radius: 14px;
+    padding: 40px 36px 32px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: normal;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  #line {
+    margin: 36px 0;
+    min-height: 4.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    line-height: 1.45;
+    transition: opacity 160ms ease;
+  }
+
+  #line.fading { opacity: 0; }
+
+  #counter {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+
+  button {
+    font: inherit;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    padding: 12px 34px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+    transition: transform 80ms ease, filter 120ms ease;
+  }
+
+  button:hover { filter: brightness(1.08); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  #hint {
+    margin: 20px 0 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: system-ui, sans-serif;
+  }
+
+  @media (max-width: 480px) {
+    main { padding: 28px 20px 24px; }
+    #line { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+  <main>
+    <h1>Sonnet 18 &middot; Shakespeare</h1>
+    <p id="line" aria-live="polite"></p>
+    <p id="counter"></p>
+    <button id="next" type="button">Next</button>
+    <p id="hint">Press Space or &rarr; for the next line</p>
+  </main>
+
+<script>
+  const lines = [
+    "Shall I compare thee to a summer's day?",
+    "Thou art more lovely and more temperate:",
+    "Rough winds do shake the darling buds of May,",
+    "And summer's lease hath all too short a date;",
+    "Sometime too hot the eye of heaven shines,",
+    "And often is his gold complexion dimm'd;",
+    "And every fair from fair sometime declines,",
+    "By chance or nature's changing course untrimm'd;",
+    "But thy eternal summer shall not fade,",
+    "Nor lose possession of that fair thou ow'st;",
+    "Nor shall Death brag thou wander'st in his shade,",
+    "When in eternal lines to time thou grow'st:",
+    "So long as men can breathe or eyes can see,",
+    "So long lives this, and this gives life to thee."
+  ];
+
+  const lineEl = document.getElementById("line");
+  const counterEl = document.getElementById("counter");
+  const nextBtn = document.getElementById("next");
+
+  let index = 0;
+
+  function render() {
+    lineEl.textContent = lines[index];
+    counterEl.textContent = "Line " + (index + 1) + " of " + lines.length;
+  }
+
+  function next() {
+    index = (index + 1) % lines.length;
+    lineEl.classList.add("fading");
+    setTimeout(function () {
+      render();
+      lineEl.classList.remove("fading");
+    }, 160);
+  }
+
+  nextBtn.addEventListener("click", next);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === " " || e.key === "ArrowRight" || e.key === "Enter") {
+      e.preventDefault();
+      next();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
