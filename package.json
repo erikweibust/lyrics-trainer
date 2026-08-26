@@ -1,0 +1,15 @@
+{
+  "name": "lyrics-trainer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A framework-free line trainer for memorizing a poem.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.11"
+  }
+}
