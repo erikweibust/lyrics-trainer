@@ -32,6 +32,8 @@ const past1El = document.getElementById("past-1");
 const past2El = document.getElementById("past-2");
 const counterEl = document.getElementById("counter");
 const nextBtn = document.getElementById("next");
+const prevBtn = document.getElementById("prev");
+const edgeEl = document.getElementById("edge");
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -51,10 +53,29 @@ function render() {
   past1El.textContent = near;
   lineEl.textContent = trainer.current();
   counterEl.textContent = "Line " + trainer.position + " of " + trainer.total;
+
+  // The ends are shown twice over: the dead button says which way is blocked,
+  // the note says why. Announced politely so a screen reader hears it too.
+  prevBtn.disabled = trainer.atStart;
+  nextBtn.disabled = trainer.atEnd;
+  edgeEl.textContent = trainer.atEnd
+    ? "End of the poem"
+    : trainer.atStart
+      ? "Start of the poem"
+      : "";
+
+  // Disabling the button under the pointer would drop focus to the body and
+  // strand a keyboard reader mid-poem; hand it to the direction still open.
+  if (document.activeElement === prevBtn && prevBtn.disabled) nextBtn.focus();
+  else if (document.activeElement === nextBtn && nextBtn.disabled) prevBtn.focus();
 }
 
-function next() {
-  trainer.next();
+// Both directions share one path: move the trainer, save, then fade.
+function move(step) {
+  const before = trainer.index;
+  step();
+  if (trainer.index === before) return; // already at that end — nothing to fade
+
   store.save(trainer.index);
 
   clearTimeout(fadeTimer);
@@ -74,7 +95,11 @@ function next() {
   }, FADE_MS);
 }
 
+const next = () => move(() => trainer.next());
+const prev = () => move(() => trainer.prev());
+
 nextBtn.addEventListener("click", next);
+prevBtn.addEventListener("click", prev);
 
 document.addEventListener("keydown", function (e) {
   if (e.repeat) return;
@@ -82,6 +107,9 @@ document.addEventListener("keydown", function (e) {
   if (e.key === " " || e.key === "ArrowRight" || e.key === "Enter") {
     e.preventDefault();
     next();
+  } else if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    prev();
   }
 });
 

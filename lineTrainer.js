@@ -40,9 +40,25 @@ export function createLineTrainer(lines, startIndex = 0) {
       };
     },
 
-    /** Advances one line, wrapping past the end. Returns the new index. */
+    /** True at the two ends, where there is nowhere further to go. */
+    get atStart() {
+      return index === 0;
+    },
+    get atEnd() {
+      return index === lines.length - 1;
+    },
+
+    // The ends are walls, not seams: a reader who has run out of poem should
+    // be told so, rather than be silently dropped back at the other end.
+    /** Advances one line, stopping at the last. Returns the new index. */
     next() {
-      index = (index + 1) % lines.length;
+      if (index < lines.length - 1) index++;
+      return index;
+    },
+
+    /** Steps back one line, stopping at the first. Returns the new index. */
+    prev() {
+      if (index > 0) index--;
       return index;
     },
   };

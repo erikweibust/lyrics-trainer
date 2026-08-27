@@ -52,33 +52,132 @@ describe("advancing", () => {
   });
 });
 
-describe("wrapping at the end", () => {
-  it("returns to the first line after the last one", () => {
+describe("stopping at the end", () => {
+  it("stays on the last line instead of starting over", () => {
     const t = createLineTrainer(LINES, LAST);
     expect(t.current()).toBe("four");
 
     t.next();
+    expect(t.index).toBe(LAST);
+    expect(t.current()).toBe("four");
+    expect(t.position).toBe(4);
+  });
+
+  it("keeps the history intact when it refuses to advance", () => {
+    const t = createLineTrainer(LINES, LAST);
+    t.next();
+    expect(t.history()).toEqual({ far: "two", near: "three" });
+  });
+
+  it("returns the unchanged index from a refused next()", () => {
+    const t = createLineTrainer(LINES, LAST);
+    expect(t.next()).toBe(LAST);
+  });
+
+  it("lands on the last line after a whole pass and stays there", () => {
+    const t = createLineTrainer(LINES);
+    for (let i = 0; i < LINES.length * 3; i++) t.next();
+    expect(t.index).toBe(LAST);
+  });
+
+  it("can still be walked back after piling up against the end", () => {
+    const t = createLineTrainer(LINES);
+    for (let i = 0; i < 10; i++) t.next();
+    t.prev();
+    expect(t.index).toBe(LAST - 1);
+  });
+});
+
+describe("going back", () => {
+  it("returns to the previous line and empties the history at the top", () => {
+    const t = createLineTrainer(LINES, 1);
+    t.prev();
     expect(t.index).toBe(0);
     expect(t.current()).toBe("one");
     expect(t.position).toBe(1);
-  });
-
-  it("starts the new pass with an empty history", () => {
-    const t = createLineTrainer(LINES, LAST);
-    t.next();
     expect(t.history()).toEqual({ far: "", near: "" });
   });
 
-  it("comes full circle after a whole pass through the poem", () => {
+  it("restores the history that was showing before the advance", () => {
     const t = createLineTrainer(LINES);
-    for (let i = 0; i < LINES.length; i++) t.next();
+    t.next();
+    t.next();
+    expect(t.history()).toEqual({ far: "one", near: "two" });
+    t.prev();
+    expect(t.current()).toBe("two");
+    expect(t.history()).toEqual({ far: "", near: "one" });
+  });
+
+  it("returns the new index from prev()", () => {
+    const t = createLineTrainer(LINES, 2);
+    expect(t.prev()).toBe(1);
+    expect(t.prev()).toBe(0);
+  });
+
+  it("stays on the first line instead of jumping to the last", () => {
+    const t = createLineTrainer(LINES);
+    expect(t.prev()).toBe(0);
+    expect(t.current()).toBe("one");
+    expect(t.position).toBe(1);
+    expect(t.history()).toEqual({ far: "", near: "" });
+  });
+
+  it("holds at the first line however often it is pushed", () => {
+    const t = createLineTrainer(LINES, 2);
+    for (let i = 0; i < 10; i++) t.prev();
     expect(t.index).toBe(0);
   });
 
-  it("keeps wrapping over repeated passes", () => {
+  it("can still be walked forward after piling up against the start", () => {
+    const t = createLineTrainer(LINES, 2);
+    for (let i = 0; i < 10; i++) t.prev();
+    t.next();
+    expect(t.index).toBe(1);
+  });
+
+  it("undoes next() from every line that can still advance", () => {
+    for (let start = 0; start < LAST; start++) {
+      const t = createLineTrainer(LINES, start);
+      t.next();
+      t.prev();
+      expect(t.index).toBe(start);
+    }
+  });
+});
+
+describe("the ends", () => {
+  it("flags the first line as the start and not the end", () => {
     const t = createLineTrainer(LINES);
-    for (let i = 0; i < LINES.length * 3 + 2; i++) t.next();
-    expect(t.index).toBe(2);
+    expect(t.atStart).toBe(true);
+    expect(t.atEnd).toBe(false);
+  });
+
+  it("flags the last line as the end and not the start", () => {
+    const t = createLineTrainer(LINES, LAST);
+    expect(t.atStart).toBe(false);
+    expect(t.atEnd).toBe(true);
+  });
+
+  it("flags neither end in the middle of the poem", () => {
+    const t = createLineTrainer(LINES, 2);
+    expect(t.atStart).toBe(false);
+    expect(t.atEnd).toBe(false);
+  });
+
+  it("tracks the ends as the reader moves", () => {
+    const t = createLineTrainer(LINES);
+    t.next();
+    expect(t.atStart).toBe(false);
+    t.prev();
+    expect(t.atStart).toBe(true);
+  });
+
+  it("calls a one-line poem both the start and the end at once", () => {
+    const t = createLineTrainer(["only"]);
+    expect(t.atStart).toBe(true);
+    expect(t.atEnd).toBe(true);
+    expect(t.next()).toBe(0);
+    expect(t.prev()).toBe(0);
   });
 });
 
