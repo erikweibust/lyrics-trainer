@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+`PHASE-2.md` records a design discussion about where the app could go, and — in
+its appendix — which directions have already been declined and why. Read it
+before proposing a change of direction. It describes nothing that exists yet;
+this file remains the description of the code as built.
+
 ## Commands
 
 ```bash
