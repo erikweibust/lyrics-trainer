@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Line Trainer — Sonnet 18</title>
+<!-- Replaced with the poem's own name once poem.js loads. -->
+<title>Line Trainer</title>
 <style>
   :root {
     --bg: #f6f3ec;
@@ -57,8 +58,11 @@
     text-align: center;
   }
 
+  /* Reserves its line while poem.js is still loading, so the card does not
+     resize as the heading arrives. */
   h1 {
     margin: 0;
+    min-height: 1.2em;
     font-size: 0.78rem;
     font-weight: normal;
     letter-spacing: 0.16em;
@@ -167,7 +171,8 @@
 </head>
 <body>
   <main>
-    <h1>Sonnet 18 &middot; Shakespeare</h1>
+    <!-- Filled from poem.js, so swapping the poem touches only that file. -->
+    <h1 id="title"></h1>
     <div id="stack">
       <p class="past" id="past-2"></p>
       <p class="past" id="past-1"></p>

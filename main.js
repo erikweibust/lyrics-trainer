@@ -1,31 +1,15 @@
 // DOM glue: wires the trainer and its saved position to the page, and owns
 // the fade. Deliberately thin — the behavior worth testing lives in
-// lineTrainer.js and storage.js.
+// lineTrainer.js and storage.js, and the poem itself lives in poem.js.
 
 import { createLineTrainer } from "./lineTrainer.js";
 import { browserBackend, createStorage, fingerprint } from "./storage.js";
+import { lines, storageKey, title } from "./poem.js";
 
-const lines = [
-  "Shall I compare thee to a summer's day?",
-  "Thou art more lovely and more temperate:",
-  "Rough winds do shake the darling buds of May,",
-  "And summer's lease hath all too short a date;",
-  "Sometime too hot the eye of heaven shines,",
-  "And often is his gold complexion dimm'd;",
-  "And every fair from fair sometime declines,",
-  "By chance or nature's changing course untrimm'd;",
-  "But thy eternal summer shall not fade,",
-  "Nor lose possession of that fair thou ow'st;",
-  "Nor shall Death brag thou wander'st in his shade,",
-  "When in eternal lines to time thou grow'st:",
-  "So long as men can breathe or eyes can see,",
-  "So long lives this, and this gives life to thee.",
-];
-
-// Bump the version suffix if the shape of the stored value ever changes.
-const STORAGE_KEY = "line-trainer:sonnet-18:v1";
+// Must stay in sync with the #stack `transition: opacity` duration in index.html.
 const FADE_MS = 160;
 
+const titleEl = document.getElementById("title");
 const stackEl = document.getElementById("stack");
 const lineEl = document.getElementById("line");
 const past1El = document.getElementById("past-1");
@@ -38,7 +22,7 @@ const edgeEl = document.getElementById("edge");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const store = createStorage({
-  key: STORAGE_KEY,
+  key: storageKey,
   signature: fingerprint(lines.join("\n")),
   backend: browserBackend(),
 });
@@ -70,26 +54,42 @@ function render() {
   else if (document.activeElement === nextBtn && nextBtn.disabled) prevBtn.focus();
 }
 
-// Both directions share one path: move the trainer, save, then fade.
+// Saving after the draw rather than before it means the recorded place is
+// always one the page has actually been told to show: a tab closed during the
+// fade resumes where the reader was, not a line ahead of it.
+function commit() {
+  render();
+  store.save(trainer.index);
+}
+
+// Both directions share one path: move the trainer, then draw and save.
 function move(step) {
   const before = trainer.index;
   step();
   if (trainer.index === before) return; // already at that end — nothing to fade
 
-  store.save(trainer.index);
-
-  clearTimeout(fadeTimer);
-  fadeTimer = null;
-
   if (reduceMotion.matches) {
+    clearTimeout(fadeTimer);
+    fadeTimer = null;
     stackEl.classList.remove("fading");
-    render();
+    commit();
+    return;
+  }
+
+  // A press landing mid-fade draws straight away and leaves the fade already
+  // in flight to finish on its original schedule. Rescheduling it instead —
+  // clearTimeout, then a fresh FADE_MS — lets a reader moving faster than the
+  // fade push the draw back indefinitely: the card stays blank, every line in
+  // between goes undrawn, and #counter, which sits outside #stack so nothing
+  // fades it, stays legible on a line the reader has long since left.
+  if (fadeTimer !== null) {
+    commit();
     return;
   }
 
   stackEl.classList.add("fading");
   fadeTimer = setTimeout(function () {
-    render();
+    commit();
     stackEl.classList.remove("fading");
     fadeTimer = null;
   }, FADE_MS);
@@ -113,4 +113,6 @@ document.addEventListener("keydown", function (e) {
   }
 });
 
+titleEl.textContent = title;
+document.title = "Line Trainer — " + title;
 render();
