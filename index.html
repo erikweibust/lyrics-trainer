@@ -102,7 +102,19 @@
     font-size: 0.85rem;
     letter-spacing: 0.08em;
     color: var(--muted);
-    margin-bottom: 22px;
+    margin-bottom: 6px;
+  }
+
+  /* Reserves its line whether or not there is an end to announce, so the
+     buttons never jump when the note appears. */
+  #edge {
+    margin: 0 0 16px;
+    min-height: 1.2em;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-family: system-ui, sans-serif;
   }
 
   button {
@@ -118,8 +130,24 @@
     transition: transform 80ms ease, filter 120ms ease;
   }
 
-  button:hover { filter: brightness(1.08); }
-  button:active { transform: translateY(1px); }
+  #controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  button:hover:not(:disabled) { filter: brightness(1.08); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+
+  /* A spent direction stays in place so the row does not shift under the
+     pointer. Both buttons are the same accent when live, so "off" has to be
+     unmistakable: the color drains out as well as fading. */
+  button:disabled {
+    opacity: 0.3;
+    filter: grayscale(1);
+    cursor: default;
+  }
   button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
   #hint {
@@ -131,6 +159,7 @@
 
   @media (max-width: 480px) {
     main { padding: 28px 20px 24px; }
+    button { padding: 12px 24px; }
     #line { font-size: 1.3rem; }
     .past { font-size: 0.95rem; }
   }
@@ -145,8 +174,12 @@
       <p id="line" aria-live="polite"></p>
     </div>
     <p id="counter"></p>
-    <button id="next" type="button">Next</button>
-    <p id="hint">Press Space, Enter, or &rarr; for the next line</p>
+    <p id="edge" role="status" aria-live="polite"></p>
+    <div id="controls">
+      <button id="prev" type="button">Previous</button>
+      <button id="next" type="button">Next</button>
+    </div>
+    <p id="hint">Press Space, Enter, or &rarr; for the next line, &larr; to go back</p>
   </main>
 
 <script type="module" src="main.js"></script>
