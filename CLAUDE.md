@@ -7,6 +7,10 @@ its appendix — which directions have already been declined and why. Read it
 before proposing a change of direction. It describes nothing that exists yet;
 this file remains the description of the code as built.
 
+`README.md` is the reader-facing description — what the app is, how to run it,
+how to swap the poem. Keep the two in step when behavior changes; it covers the
+same ground without the reasoning, so detail about *why* belongs here.
+
 ## Commands
 
 ```bash
@@ -33,7 +37,7 @@ The split exists so the logic is testable without a DOM:
 - **`lineTrainer.js`** — pure line navigation. Owns the current index, the two-line history (`far` = older, `near` = newer), 1-based `position`, and the two ends. `next()` and `prev()` clamp rather than wrap: at the last or first line they leave the index alone and return it unchanged, and `atStart`/`atEnd` let the UI say so. Knows nothing about the DOM or storage. `createLineTrainer(lines, startIndex)` treats an untrusted `startIndex` as a suggestion: anything failing `isValidIndex` silently falls back to 0.
 - **`storage.js`** — persistence of the reader's place. Every localStorage path is defensive: `browserBackend()` returns `null` where the browser refuses access (Safari on `file://`, private mode, blocked site data — the property access itself can throw), and `load()`/`save()` swallow failures so resuming degrades to "start at the top" rather than breaking the app. Stored values carry an FNV-1a `fingerprint` of the poem text; `load()` rejects a saved index whose signature doesn't match, so swapping the poem cannot resume mid-way through a different text. Bounds checking is deliberately *not* done here — that's the trainer's job.
 - **`poem.js`** — the text itself, plus the `title` and the versioned `storageKey` that names it. The trainer core and the FNV-1a signature are both poem-agnostic, so this is the only file a swapped poem should touch: `main.js` writes `title` into the empty `#title` heading and `document.title` on load.
-- **`main.js`** — DOM glue only: wires the other three modules together, handles the Next/Previous buttons and the Space/Enter/→ (forward) and ← (back) keys, disables the spent direction at each end, and owns the fade transition. Deliberately thin; behavior worth testing belongs in the other modules.
+- **`main.js`** — DOM glue only: wires the other three modules together, handles the Next/Previous buttons and the Space/Enter/→ (forward) and ← (back) keys, disables the spent direction at each end, and owns the fade transition. Deliberately thin; behavior worth testing belongs in the other modules. The key handler ignores auto-repeat (`e.repeat`) and any press carrying a modifier, so holding a key doesn't sprint through the poem and browser shortcuts still reach the browser. When `render()` disables the button that currently holds focus, it hands focus to the other one first — otherwise focus falls to `<body>` and a keyboard reader is stranded at the end of the poem.
 
 Data flow on each move: `trainer.next()`/`trainer.prev()` → fade out → `commit()` (`render()`, then `store.save(trainer.index)`) → fade in. Both directions go through the single `move(step)` helper, which compares the index before and after the step and returns early when nothing moved, so pressing into a wall costs no save and no fade. The fade is skipped entirely under `prefers-reduced-motion`.
 
@@ -47,5 +51,8 @@ Two orderings in `move()` are load-bearing and neither is arbitrary:
 - `storageKey` in `poem.js` is versioned (`line-trainer:sonnet-18:v1`). Bump the suffix if the shape of the stored value changes.
 - `FADE_MS` in `main.js` must stay in sync with the `#stack` `transition: opacity` duration in `index.html`.
 - `#edge` and `h1` in `index.html` both reserve their line height while empty, so nothing below them jumps: the end note appears and disappears, and the heading is blank until `poem.js` has loaded.
+- Each end is announced twice over: the dead button shows which way is blocked, and `#edge` (`role="status"`, `aria-live="polite"`) says why. `#line` is `aria-live="polite"` too, so the new line is read out as it lands. Keep both states in sync when either changes.
+- A disabled button must not be told apart from a live one by opacity alone — `button:disabled` drains the accent color as well (`grayscale(1)`), so "spent direction" never reads as "secondary control".
+- `notes/` is gitignored scratch space. Docs meant to last live at the repo root and are referenced from this file.
 - Comments explain *why* a defense exists (which browser, which failure), not what the code does. Match that register.
 - Tests use a hand-rolled `fakeBackend()` stand-in that can be told to throw, rather than mocking localStorage — failure modes are covered as first-class cases, including the exact boundary values an off-by-one would let through.
