@@ -4,3 +4,6 @@ coverage/
 playwright-report/
 test-results/
 notes/
+
+# Per-machine Claude Code settings; .claude/commands/ is shared and tracked.
+.claude/settings.local.json
