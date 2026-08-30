@@ -14,12 +14,20 @@ npm run dev        # Vite dev server, http://localhost:5173
 ```
 
 Vite is only a dev server here — there is no build step and nothing is bundled.
-`index.html` loads the ES modules directly, so opening the file straight from
-disk works too:
+`index.html` loads the ES modules directly.
 
-```bash
-open index.html    # file:// also works
+Opening `index.html` straight from disk mostly does *not* work. A `file://`
+page has a null origin, and `<script type="module">` is fetched under CORS, so
+Chrome and Safari refuse to load `main.js` and you get a blank card:
+
 ```
+Access to script at 'file:///.../main.js' from origin 'null'
+has been blocked by CORS policy
+```
+
+Firefox still allows file-to-file module loads, so it is the one browser where
+`open index.html` shows the poem. Use `npm run dev` unless you have a reason
+not to.
 
 ## Using it
 
@@ -35,8 +43,8 @@ Your place is saved as you go and restored the next time you open the page.
 The saved place is stamped with a signature of the poem text, so editing or
 swapping the poem starts you cleanly at line 1 instead of resuming part-way
 through a text you never read. Where the browser refuses `localStorage` at all
-— Safari on `file://`, private mode, blocked site data — saving is skipped
-silently and the page simply opens at the top.
+— private mode, blocked site data, or a `file://` page in a browser that loads
+one at all — saving is skipped silently and the page simply opens at the top.
 
 The card fades between lines, and skips the fade entirely under
 `prefers-reduced-motion`.
